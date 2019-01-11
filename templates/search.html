@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ search }}
+{% endblock %}
+
+{% block main %}
+  <div>
+    <table class="table">
+  <thead class="thead-light">
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">ISBN</th>
+      <th scope="col">Book</th>
+      <th scope="col">Author</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in rows %}
+      <tr>
+        <th class="counterCell" scope="row"><a class="nav-link" href=""></a></th>
+        <td><a class="nav-link" href="">{{ i["isbn"] }}</a></td>
+        <td><a class="nav-link" href="">{{ i["title"] }}</a></td>
+        <td><a class="nav-link" href="">{{ i["author"] }}</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+  </div>
+{% endblock %}

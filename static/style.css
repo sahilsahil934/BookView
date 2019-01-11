@@ -46,3 +46,23 @@ main img
     /* constrain images on small screens */
     max-width: 100%;
 }
+
+#searchbox{
+    width: 100%;
+    overflow: hidden;
+    align-items: center;
+    justify-content: space-around;
+    display: flex;
+}
+
+table {
+    counter-reset: tableCount;
+}
+.counterCell:before {
+    content: counter(tableCount);
+    counter-increment: tableCount;
+}
+
+.custom{
+   width: 200px;
+}

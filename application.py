@@ -39,7 +39,8 @@ db = scoped_session(sessionmaker(bind=engine))
 @app.route("/")
 @login_required
 def index():
-    return "TO DO"
+
+    return render_template("index.html")
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -96,7 +97,7 @@ def register():
 
         else:
             key = db.execute("INSERT INTO users (firstname, lastname, username, password) VALUES(:firstname, :lastname, :username, :password)",
-                  {'firstname': request.form.get("firstname"), 'lastname': request.form.get("lastname"), 'username': request.form.get("username"),
+                  {'firstname': request.form.get("firstname"), 'lastname': request.form.get("lastname"), 'username': request.form.get("username").lower(),
                    'password': generate_password_hash(request.form.get("password"), method='pbkdf2:sha256', salt_length=8)})
 
         row = db.execute("SELECT * FROM users WHERE username = :username", {'username': request.form.get("username")}).fetchall()
@@ -110,3 +111,27 @@ def register():
     else:
 
         return render_template("register.html")
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
+
+@app.route("/search", methods=["GET", "POST"])
+@login_required
+def search():
+
+    if request.method == "GET":
+
+        return redirect("/")
+
+    else:
+
+        if not request.form.get("search"):
+            return redirect("/")
+
+        rows = db.execute("SELECT DISTINCT isbn, title, author FROM books WHERE LOWER(isbn) LIKE :search OR LOWER(title) LIKE :search OR LOWER(author) LIKE :search", {'search': '%' + request.form.get("search").lower() + '%'}).fetchall()
+
+        return render_template("search.html", rows=rows, search=request.form.get("search"))
