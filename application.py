@@ -4,6 +4,8 @@ from flask import Flask, session, render_template, redirect, request
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from werkzeug.security import check_password_hash, generate_password_hash
+
 
 from helpers import login_required
 
@@ -58,7 +60,7 @@ def login():
 
         row = db.execute("SELECT * FROM users WHERE username = :username", {'username': request.form.get("username")}).fetchall()
 
-        if len(row) != 1 or row[0]["password"] != request.form.get("password"):
+        if len(row) != 1 or not check_password_hash(row[0]["password"], request.form.get("password")):
             return render_template("login.html", message = "Username or Password is Incorrect!")
 
         session["user_id"] = row[0]["user_id"]
@@ -94,7 +96,8 @@ def register():
 
         else:
             key = db.execute("INSERT INTO users (firstname, lastname, username, password) VALUES(:firstname, :lastname, :username, :password)",
-                  {'firstname': request.form.get("firstname"), 'lastname': request.form.get("lastname"), 'username': request.form.get("username"), 'password': request.form.get("password")})
+                  {'firstname': request.form.get("firstname"), 'lastname': request.form.get("lastname"), 'username': request.form.get("username"),
+                   'password': generate_password_hash(request.form.get("password"), method='pbkdf2:sha256', salt_length=8)})
 
         row = db.execute("SELECT * FROM users WHERE username = :username", {'username': request.form.get("username")}).fetchall()
 
