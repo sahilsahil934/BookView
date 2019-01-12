@@ -3,8 +3,11 @@
 {% block title %}
     {{ search }}
 {% endblock %}
-
+{% block name %}
+{{ user[0]["firstname"] }}
+ {% endblock %}
 {% block main %}
+{% if rows %}
   <div>
     <table class="table">
   <thead class="thead-light">
@@ -20,11 +23,17 @@
       <tr>
         <th class="counterCell" scope="row"><a class="nav-link" href=""></a></th>
         <td><a class="nav-link" href="">{{ i["isbn"] }}</a></td>
-        <td><a class="nav-link" href="">{{ i["title"] }}</a></td>
+        <td><a class="nav-link" href="/book/{{ i["title"] }}">{{ i["title"] }}</a></td>
         <td><a class="nav-link" href="">{{ i["author"] }}</a></td>
       </tr>
     {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+    </table>
   </div>
+{% else %}
+<div class="jumbotron">
+  <h1 class="display-4">Sorry!</h1>
+  <p class="lead">No Result found for {{ search }}</p>
+</div>
+{% endif %}
 {% endblock %}

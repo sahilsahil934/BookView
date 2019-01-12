@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+{% block name %}
+{{ user[0]["firstname"] }}
+ {% endblock %}
+{% block main %}
+  <div class="jumbotron jumbotron-fluid">
+    <div class="container">
+      <h3 class="display-4">{{ rows[0]["title"] }}</h3>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">Author: {{ rows[0]["author"] }}</li>
+        <li class="list-group-item">ISBN: {{ rows[0]["isbn"] }}</li>
+        <li class="list-group-item">Year: {{rows[0]["year"] }}</li>
+      </ul>
+    </div>
+    <hr class="my-4">
+    <form action="/book/{{ rows[0]["title"] }}" method="post">
+      <div class="dropdown">
+        <select autofocus class="form-control" name="rating">
+            <option disabled selected>Rate</option>
+            <option value = "1">1</option>
+            <option value = "2">2</option>
+            <option value = "3">3</option>
+            <option value = "4">4</option>
+            <option value = "5">5</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="comment">Comment:</label>
+        <textarea class="form-control" rows="5" cols="50" id="comment" name="comment" placeholder="Optional"></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit">Rate</button>
+    </form>
+  </div>
+  <div class="jumbotron jumbotron-fluid">
+    <div class="container">
+      <h3 class="display-4">Reviews</h3>
+      {% if rate %}
+      <ul class="list-group">
+        {% for i in rate %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          User: {{ i["firstname"] }}
+          <span class="badge badge-primary badge-pill">{{ i["rating"] }} Stars</span>
+        </li>
+        <li class="list-group-item">Comment: {{ i["review"] }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        <p class="lead">No Review</p>
+      {% endif %}
+    </div>
+  </div>
+
+{% endblock %}

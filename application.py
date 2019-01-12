@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, redirect, request
+from flask import Flask, session, render_template, redirect, request, url_for
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -40,7 +40,11 @@ db = scoped_session(sessionmaker(bind=engine))
 @login_required
 def index():
 
-    return render_template("index.html")
+    user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+    if len(user) != 0:
+        return render_template("index.html", user = user)
+    else:
+        return redirect("/login")
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -128,10 +132,49 @@ def search():
         return redirect("/")
 
     else:
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
 
         if not request.form.get("search"):
             return redirect("/")
 
         rows = db.execute("SELECT DISTINCT isbn, title, author FROM books WHERE LOWER(isbn) LIKE :search OR LOWER(title) LIKE :search OR LOWER(author) LIKE :search", {'search': '%' + request.form.get("search").lower() + '%'}).fetchall()
 
-        return render_template("search.html", rows=rows, search=request.form.get("search"))
+        if rows != 0:
+            return render_template("search.html", rows=rows, search=request.form.get("search"), user=user)
+        else:
+            return render_template("search.html", search=request.form.get("search"), user=user)
+
+
+@app.route("/book/<title>", methods=["GET", "POST"])
+@login_required
+def book(title):
+
+    if request.method == "GET":
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+        rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall()
+
+        rate = db.execute("SELECT firstname, review, rating FROM review JOIN users ON review.user_id = users.user_id WHERE book_id = :id", {'id': rows[0]["id"]}).fetchall()
+
+        return render_template("book.html", rows = rows, user=user, rate=rate)
+
+    else:
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+        rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall()
+
+        if not request.form.get("rating"):
+            return render_template("error.html", message = "Must provide rating", user=user)
+
+        if not request.form.get("comment"):
+
+
+            db.execute("INSERT INTO review (user_id, book_id, rating) VALUES(:user_id, :book_id, :rating)", {'user_id': int(session["user_id"]), 'book_id': rows[0]["id"], 'rating': int(request.form.get("rating"))})
+        else:
+
+            db.execute("INSERT INTO review (user_id, book_id, review, rating) VALUES(:user_id, :book_id, :review, :rating)", {'user_id': int(session["user_id"]), 'book_id': rows[0]["id"], 'review': request.form.get("comment"), 'rating': int(request.form.get("rating"))})
+
+        db.commit()
+
+        return redirect(url_for('book', title=rows[0]["title"]))

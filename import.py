@@ -10,6 +10,7 @@ db = scoped_session(sessionmaker(bind=engine))
 
 def main():
     # Create table to import data into
+    db.execute("CREATE TABLE review (user_id  INTEGER, book_id INTEGER, review VARCHAR, rating integer)")
     db.execute("CREATE TABLE books (id SERIAL PRIMARY KEY, isbn VARCHAR NOT NULL, title VARCHAR NOT NULL, author VARCHAR NOT NULL, year VARCHAR NOT NULL)")
     db.execute("CREATE TABLE users (user_id SERIAL PRIMARY KEY, firstname VARCHAR NOT NULL, lastname VARCHAR NOT NULL, username VARCHAR NOT NULL, password VARCHAR NOT NULL)")
 
