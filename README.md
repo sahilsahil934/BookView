@@ -17,3 +17,7 @@
 - then run command pip3 install -r requirement.txt
 - Add DATABASE_URL by runnin export DATABASE_URL=URI
 - flask run
+
+### YouTube Link
+
+- https://youtu.be/KD3OQXYrRME

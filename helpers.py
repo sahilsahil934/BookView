@@ -17,7 +17,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def api(isbn):
+def api_data(isbn):
 
     res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "kiJwHXKD8XFTv80gLRC3w", "isbns": isbn})
     if res.status_code != 200:

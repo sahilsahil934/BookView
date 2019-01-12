@@ -7,7 +7,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-from helpers import login_required, api
+from helpers import login_required, api_data
 
 app = Flask(__name__)
 
@@ -154,11 +154,15 @@ def search():
 def book(title):
 
     if request.method == "GET":
+
+        rating = 404
+        
         user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
 
         rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall()
 
-        rating = api(rows[0]["isbn"])
+        if len(rows) != 0:
+            rating = api_data(rows[0]["isbn"])
 
         fav = db.execute("SELECT * FROM fav WHERE user_id = :user_id AND book_id = :book_id", {'user_id': int(session["user_id"]), 'book_id': rows[0]["id"]}).fetchall()
 
