@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Already
+{% endblock %}
+{% block name %}
+{{ user[0]["firstname"] }}
+ {% endblock %}
+{% block main %}
+<div class="jumbotron">
+  <p class="lead">Rating already provided by you {{ rate[0]["rating"] }} stars</p>
+  <p class="lead">Comment: {{ rate[0]["comment"] }}</p>
+  <p class="lead">Do you want to delete it</p>
+  <form>
+      <button class="btn btn-primary" type="submit" formaction="/delete/{{ rate[0]["book_id"] }}">Delete</button>
+      <button class="btn btn-primary" type="submit" formaction="/book/{{ rows[0]["title"] }}" >Cancel</button>
+  </form>
+  <p class="lead">Your review will be deleted for this book permanently, After deleting you can add new one.</p>
+</div>
+{% endblock %}

@@ -164,8 +164,13 @@ def book(title):
 
         rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall()
 
+        rate = db.execute("SELECT * FROM review WHERE user_id = :id AND book_id = :book_id", {'id': session["user_id"], 'book_id': rows[0]["id"]}).fetchall()
+
         if not request.form.get("rating"):
             return render_template("error.html", message = "Must provide rating", user=user)
+
+        if len(rate) != 0:
+            return render_template("already.html", user=user, rate=rate, rows=rows)
 
         if not request.form.get("comment"):
 
@@ -178,3 +183,14 @@ def book(title):
         db.commit()
 
         return redirect(url_for('book', title=rows[0]["title"]))
+
+@app.route("/delete/<id>")
+@login_required
+def delete(id):
+
+    db.execute("DELETE FROM review WHERE user_id = :id AND book_id = :book_id", {'id': int(session["user_id"]), 'book_id': int(id)})
+    db.commit()
+
+    rows = db.execute("SELECT * FROM books WHERE id = :id", {'id': id}).fetchall()
+
+    return redirect(url_for('book', title=rows[0]["title"]))
