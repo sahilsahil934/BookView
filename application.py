@@ -1,13 +1,13 @@
 import os
 
-from flask import Flask, session, render_template, redirect, request, url_for
+from flask import Flask, session, render_template, redirect, request, url_for, flash
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-from helpers import login_required
+from helpers import login_required, api
 
 app = Flask(__name__)
 
@@ -41,8 +41,11 @@ db = scoped_session(sessionmaker(bind=engine))
 def index():
 
     user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
     if len(user) != 0:
+
         return render_template("index.html", user = user)
+
     else:
         return redirect("/login")
 
@@ -132,6 +135,7 @@ def search():
         return redirect("/")
 
     else:
+
         user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
 
         if not request.form.get("search"):
@@ -154,9 +158,24 @@ def book(title):
 
         rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall()
 
+        rating = api(rows[0]["isbn"])
+
+        fav = db.execute("SELECT * FROM fav WHERE user_id = :user_id AND book_id = :book_id", {'user_id': int(session["user_id"]), 'book_id': rows[0]["id"]}).fetchall()
+
+
         rate = db.execute("SELECT firstname, review, rating FROM review JOIN users ON review.user_id = users.user_id WHERE book_id = :id", {'id': rows[0]["id"]}).fetchall()
 
-        return render_template("book.html", rows = rows, user=user, rate=rate)
+        if len(fav) != 0:
+            if rating == 404:
+                return render_template("book.html", rows = rows, user=user, rate=rate, message="Remove from Favourite")
+
+            return render_template("book.html", rows = rows, user=user, rate=rate, rating=rating, message="Remove from Favourite")
+
+        else:
+            if rating == 404:
+                return render_template("book.html", rows = rows, user=user, rate=rate, message="Add to Favourite")
+
+            return render_template("book.html", rows = rows, user=user, rate=rate, rating=rating, message="Add to Favourite")
 
     else:
 
@@ -194,3 +213,68 @@ def delete(id):
     rows = db.execute("SELECT * FROM books WHERE id = :id", {'id': id}).fetchall()
 
     return redirect(url_for('book', title=rows[0]["title"]))
+
+@app.route("/password", methods=["GET", "POST"])
+@login_required
+def password():
+
+    user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+    if request.method == "GET":
+
+        return render_template("password.html", user=user)
+
+    else:
+
+        if not request.form.get("old"):
+            return render_template("password.html", message="Missing Old Password", user=user)
+
+        elif not request.form.get("password"):
+            return render_template("password.html", message="Missing new password", user=user)
+
+        elif request.form.get("confirmation") != request.form.get("password"):
+            return render_template("password.html", message="Password don't Match", user=user)
+
+        rows = db.execute("SELECT * FROM users WHERE user_id = :user_id", {'user_id':session["user_id"]}).fetchall()
+
+        if not check_password_hash(rows[0]["password"], request.form.get("old")):
+            return render_template("password.html", message="Wrong old Password", user=user)
+
+        else:
+            db.execute("UPDATE users SET password = :hash WHERE user_id = :user_id",
+                       {'user_id':session["user_id"],
+                       'hash':generate_password_hash(request.form.get("password"), method='pbkdf2:sha256', salt_length=8)})
+
+            db.commit()
+        flash("Password Changed")
+        return redirect(url_for('index'))
+
+@app.route("/fav/<id>", methods=["GET", "POST"])
+@login_required
+def fav(id):
+
+    if request.method == "GET":
+
+        rows = db.execute("SELECT isbn, title, Author FROM books JOIN fav ON books.id = fav.book_id WHERE user_id = :user_id", {'user_id': session["user_id"]}).fetchall()
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+        return render_template("fav.html", user=user, rows=rows, search="Favourite")
+
+    else:
+
+        book = db.execute("SELECT * FROM fav WHERE user_id = :user_id AND book_id = :book_id", {'user_id': session["user_id"], 'book_id': id}).fetchall()
+
+        if len(book) == 0:
+
+            db.execute("INSERT INTO fav (user_id, book_id) VALUES(:user_id, :book_id)", {'user_id': session["user_id"], 'book_id': id })
+            db.commit()
+            flash("Added to favourite")
+
+        else:
+
+            db.execute("DELETE FROM fav WHERE user_id = :user_id AND book_id = :book_id", {'user_id': session["user_id"], 'book_id': id})
+            db.commit()
+            flash("Deleted from Favourite")    
+
+        return redirect(url_for('fav', id=id))

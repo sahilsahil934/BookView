@@ -14,8 +14,21 @@
         <li class="list-group-item">Author: {{ rows[0]["author"] }}</li>
         <li class="list-group-item">ISBN: {{ rows[0]["isbn"] }}</li>
         <li class="list-group-item">Year: {{rows[0]["year"] }}</li>
-      </ul>
-    </div>
+        {% if rating %}
+        <li class="list-group-item">Goodreads Rating: {{ rating["books"][0]["average_rating"] }} </li>
+        <li class="list-group-item">Goodreads Total Reviews: {{ rating["books"][0]["work_ratings_count"] }}</li>
+        {% else %}
+        <li class="list-group-item">Goodreads Rating: Not available </li>
+        <li class="list-group-item">Goodreads Total Reviews: Not available</li>
+        {% endif %}
+        <hr class="my-4">
+        <li>
+          <form action="/fav/{{ rows[0]["id"] }}" method="post">
+            <button class="btn btn-outline-success">{{ message }}</button>
+          </form>
+        </li>
+        </ul>
+      </div>
     <hr class="my-4">
     <form action="/book/{{ rows[0]["title"] }}" method="post">
       <div class="dropdown">

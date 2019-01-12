@@ -1,4 +1,4 @@
-
+import requests
 
 from flask import redirect, render_template, request, session
 from functools import wraps
@@ -16,3 +16,13 @@ def login_required(f):
             return redirect("/login")
         return f(*args, **kwargs)
     return decorated_function
+
+def api(isbn):
+
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "kiJwHXKD8XFTv80gLRC3w", "isbns": isbn})
+    if res.status_code != 200:
+        return 404
+    return res.json()
+
+if __name__ == "__api__":
+    api()

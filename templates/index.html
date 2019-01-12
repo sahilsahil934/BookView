@@ -4,15 +4,14 @@
     Home
 {% endblock %}
 {% block name %}
-{% if user %}
 {{ user[0]["firstname"] }}
-{% else %}
-No user
-{% endif %}
-
  {% endblock %}
 {% block main %}
-
-
+{% if message %}
+<p class="lead">{{ message }}</p>
+{% endif %}
+<div class="jumbotron">
+  <h1 class="display-4">WELCOME TO BOOKS</h1>
+</div>
 
 {% endblock %}
