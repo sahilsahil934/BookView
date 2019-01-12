@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, redirect, request, url_for, flash
+from flask import Flask, session, render_template, redirect, request, url_for, flash, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -275,6 +275,33 @@ def fav(id):
 
             db.execute("DELETE FROM fav WHERE user_id = :user_id AND book_id = :book_id", {'user_id': session["user_id"], 'book_id': id})
             db.commit()
-            flash("Deleted from Favourite")    
+            flash("Deleted from Favourite")
 
         return redirect(url_for('fav', id=id))
+
+@app.route("/api/<isbn>")
+def api(isbn):
+
+    detail = db.execute("SELECT * FROM books WHERE isbn = :isbn", {'isbn': isbn}).fetchall()
+
+    if len(detail) == 0:
+        return jsonify({"error": "Invalid ISBN"}, 404)
+
+    book = db.execute("SELECT * FROM review WHERE book_id = :book_id", {'book_id': detail[0]["id"]}).fetchall()
+
+    total = len(book)
+    sum = 0
+
+    for i in book:
+        sum += i["rating"]
+
+    average = sum/total
+
+    return jsonify({
+                    "title": detail[0]["title"],
+                    "author": detail[0]["author"],
+                    "year": detail[0]["year"],
+                    "isbn": isbn,
+                    "review_count": total,
+                    "average_score": average
+                    })
