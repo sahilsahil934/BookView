@@ -1,6 +1,6 @@
 # Books
 
-## Web Application for Books Reviewing made with Python and JavaScript:
+## Web Application for Books Reviewing made with Flask and SqlAlchemy:
 
 **Features:**
 - Register of users.
