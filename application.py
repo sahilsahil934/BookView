@@ -23,6 +23,7 @@ def after_request(response):
     return response
 
 # Check for environment variable
+# example: postgres://YourUser:Password@Host:5432/database
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
 
