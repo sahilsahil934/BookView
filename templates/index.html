@@ -10,8 +10,35 @@
 {% if message %}
 <p class="lead">{{ message }}</p>
 {% endif %}
-<div class="jumbotron">
-  <h1 class="display-4">WELCOME TO BOOKS</h1>
+<div style="margin-top: -100px !important;" class="jumbotron">
+  <form action="/post" method="post">
+    <div class="form-group">
+        <textarea style="width:500px;" class="form-control" rows="5" name="post" placeholder="What's up?"></textarea>
+        <button class="btn btn-primary" type="submit">Add Post</button>
+    </div>
+</form>
+<h3>Feed</h3>
+<hr>
+<div class="container">
+  <center>
+    {% for i in posts %}
+    <article style=" width: 750px;" class="post vt-post">
+      <div class="col-xs-12 col-sm-7 col-md-7 col-lg-8">
+          <div class="caption">
+              <h3 style="text-align: left;" class="md-heading"><a href="/showprofile/{{ i["user_id"]}}">{{ i["name"] }}</a></h3>
+              <p> {{ i["deatil"] }} </p>
+      </div>
+      <div style="text-align: left;" class="info">
+        <p>Posted on:
+        <strong>{{ i["date"] }}</strong></p></div>
+        
+  </article>
+  <hr>
+  {% endfor %}
+      
+    </center>
+</div>
+
 </div>
 
 {% endblock %}

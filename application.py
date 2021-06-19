@@ -5,6 +5,7 @@ from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import date
 
 
 from helpers import login_required, api_data
@@ -22,10 +23,6 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-# Check for environment variable
-# example: postgres://YourUser:Password@Host:5432/database
-if not os.getenv("DATABASE_URL"):
-    raise RuntimeError("DATABASE_URL is not set")
 
 # Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
@@ -33,7 +30,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Set up database
-engine = create_engine(os.getenv("DATABASE_URL"))
+engine = create_engine("postgres://postgres:12345@localhost:5432/books")
 db = scoped_session(sessionmaker(bind=engine))
 
 
@@ -42,10 +39,10 @@ db = scoped_session(sessionmaker(bind=engine))
 def index():
 
     user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
-
+    posts = db.execute("SELECT * from posts ORDER BY post_id DESC").fetchall()
     if len(user) != 0:
 
-        return render_template("index.html", user = user)
+        return render_template("index.html", user = user, posts=posts)
 
     else:
         return redirect("/login")
@@ -107,8 +104,13 @@ def register():
             key = db.execute("INSERT INTO users (firstname, lastname, username, password) VALUES(:firstname, :lastname, :username, :password)",
                   {'firstname': request.form.get("firstname"), 'lastname': request.form.get("lastname"), 'username': request.form.get("username").lower(),
                    'password': generate_password_hash(request.form.get("password"), method='pbkdf2:sha256', salt_length=8)})
+        
 
         row = db.execute("SELECT * FROM users WHERE username = :username", {'username': request.form.get("username")}).fetchall()
+
+        x = row[0]["user_id"]
+        db.execute("INSERT INTO profile (user_id) VALUES(:user)",{'user':int(x)})
+        db.execute("INSERT INTO social (user_id) VALUES(:user)",{'user':int(x)})
 
         session["user_id"] = row[0]["user_id"]
 
@@ -150,6 +152,43 @@ def search():
             return render_template("search.html", search=request.form.get("search"), user=user)
 
 
+
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+
+    if request.method == "GET":
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+        profile = db.execute("SELECT * FROM profile WHERE user_id = :user", {'user': int(session['user_id'])}).fetchall()
+        social = db.execute("SELECT * FROM social WHERE user_id = :user", {'user': int(session['user_id'])}).fetchall()
+        return render_template("profile.html", user=user, profile=profile, social=social)
+
+@app.route("/social", methods=["GET", "POST"])
+@login_required
+def social():
+
+    if request.method == "GET":
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+        social = db.execute("SELECT * FROM social WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+        return render_template("social.html", user=user,social=social)
+
+    else:
+
+        rows = db.execute("SELECT * FROM users WHERE user_id = :user_id", {'user_id':session["user_id"]}).fetchall()
+
+        db.execute("UPDATE social SET web = :web, twitter = :twitter, instagram = :instagram, fb = :fb WHERE user_id = :user_id",
+                       {'user_id':session["user_id"],
+                       'web': request.form.get("web"), 'twitter': request.form.get("twitter"), 'instagram': request.form.get("instagram"), 'fb': request.form.get("fb")})
+
+        db.commit()
+        flash("Social updated")
+        return redirect(url_for('profile'))
+
+
 @app.route("/book/<title>", methods=["GET", "POST"])
 @login_required
 def book(title):
@@ -160,7 +199,7 @@ def book(title):
         
         user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
 
-        rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall()
+        rows = db.execute("SELECT * FROM books WHERE title = :title", {'title': title}).fetchall() 
 
         if len(rows) != 0:
             rating = api_data(rows[0]["isbn"])
@@ -310,3 +349,54 @@ def api(isbn):
                     "review_count": total,
                     "average_score": average
                     })
+
+
+@app.route("/edit_profile", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+
+    if request.method == "GET":
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+
+        profile = db.execute("SELECT * FROM profile WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+        return render_template("edit_profile.html", user=user, profile=profile)
+
+    else:
+
+        rows = db.execute("SELECT * FROM users WHERE user_id = :user_id", {'user_id':session["user_id"]}).fetchall()
+
+        db.execute("UPDATE profile SET age = :age,  sex = :sex, occ = :occ, email = :email, mobile = :mobile, country = :country, genre = :genre, interests = :interests, books = :books, movies = :movies, quote = :quote WHERE user_id = :user_id",
+                       {'user_id':session["user_id"],
+                       'age': request.form.get("age"), 'sex': request.form.get("sex"), 'occ': request.form.get("occ"), 'email': request.form.get("email"), 'mobile': request.form.get("mobile"), 'country': request.form.get("country"), 'genre': request.form.get("genre"), 'interests': request.form.get("interests"), 'books': request.form.get("books"), 'movies': request.form.get("movies"), 'quote': request.form.get("quote")})
+
+        db.commit()
+        flash("Social updated")
+        return redirect(url_for('profile'))
+
+@app.route("/post", methods=["GET", "POST"])
+@login_required
+def post():
+
+    if request.method == "POST":
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': int(session["user_id"])}).fetchall()
+        if not request.form.get("post"):
+            return render_template("index.html", message = "Post Missing")
+        
+        today_date = date.today()
+        db.execute("INSERT INTO posts (user_id, name, deatil, date) VALUES (:user, :name, :detail, :date)", {'user': int(session["user_id"]), 'name': user[0]["firstname"] + user[0]["lastname"], 'detail': request.form.get("post"), 'date': today_date})
+        db.commit()
+        return redirect("/")
+       
+@app.route("/showprofile/<id>", methods=["GET", "POST"])
+@login_required
+def showprofile(id):
+
+    if request.method == "GET":
+
+        user = db.execute("SELECT * FROM users WHERE user_id = :user", {'user': id}).fetchall()
+        print(id)
+        profile = db.execute("SELECT * FROM profile WHERE user_id = :user", {'user': id}).fetchall()
+        social = db.execute("SELECT * FROM social WHERE user_id = :user", {'user': id}).fetchall()
+        return render_template("showprofile.html", user=user, profile=profile, social=social)

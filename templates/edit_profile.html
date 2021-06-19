@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Edit Profile
+{% endblock %}
+{% block name %}
+{{ user[0]["firstname"] }}
+ {% endblock %}
+
+{% block main %}
+{% if message %}
+<p class="lead">{{ message }}</p>
+{% endif %}
+
+    <h2>Profile</h2>
+    <form action="/edit_profile" method="post">
+        <div class="form-group">
+            <label for="email" class="col-sm-1 font-weight-bold col-form-label">Email:</label>
+            <input autofocus class="form-control" name="email" value="{{ profile[0]["email"] }}" placeholder="{{ profile[0]["email"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="age" class="col-sm-1 font-weight-bold col-form-label">Age:</label>
+            <input autofocus class="form-control" name="age" value="{{ profile[0]["age"] }}" placeholder="{{ profile[0]["age"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="sex" class="col-sm-1 font-weight-bold col-form-label">Sex (M/F/T):</label>
+            <input autofocus class="form-control" name="sex" value="{{ profile[0]["sex"] }}" placeholder="{{ profile[0]["sex"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="country" class="col-sm-1 font-weight-bold col-form-label">Country:</label>
+            <input autofocus class="form-control" name="country" value="{{ profile[0]["country"] }}" placeholder="{{ profile[0]["country"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="occ" class="col-sm-1 font-weight-bold col-form-label">Occupation:</label>
+            <input autofocus class="form-control" name="occ" value="{{ profile[0]["occ"] }}" placeholder="{{ profile[0]["occ"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="mobile" class="col-sm-1 font-weight-bold col-form-label">Mobile:</label>
+            <input autofocus class="form-control" name="mobile" value="{{ profile[0]["mobile"] }}" placeholder="{{ profile[0]["mobile"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="genre" class="col-sm-1 font-weight-bold col-form-label">Favourite Genre:</label>
+            <input autofocus class="form-control" name="genre" value="{{ profile[0]["genre"] }}" placeholder="{{ profile[0]["genre"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="interests" class="col-sm-1 font-weight-bold col-form-label">Interests</label>
+            <input autofocus class="form-control" name="interests" value="{{ profile[0]["interests"] }}" placeholder="{{ profile[0]["interests"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="books" class="col-sm-1 font-weight-bold col-form-label">Books</label>
+            <input autofocus class="form-control" name="books" value="{{ profile[0]["books"] }}" placeholder="{{ profile[0]["books"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="movies" class="col-sm-1 font-weight-bold col-form-label">Movies</label>
+            <input autofocus class="form-control" name="movies" value="{{ profile[0]["movies"] }}" placeholder="{{ profile[0]["movies"] }}" type="text"/>
+        </div>
+        <div class="form-group">
+            <label for="quote" class="col-sm-1 font-weight-bold col-form-label">Quote</label>
+            <input class="form-control" name="quote" value="{{ profile[0]["quote"] }}" placeholder="{{ profile[0]["quote"] }}" type="text"/>
+        </div>
+        <button class="btn btn-primary" type="submit">Update</button>
+    </form>
+{% endblock %}
