@@ -3,5 +3,5 @@ Flask-Session
 psycopg2
 SQLAlchemy
 asyncpg
-Werkzeug==0.15.5
+Werkzeug==2.2.3
 functools
